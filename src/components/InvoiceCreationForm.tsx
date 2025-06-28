@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Trash2, Package, User, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Search, Trash2, Package, User, Calendar, DollarSign, Percent } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -73,10 +74,13 @@ interface InvoiceCreationFormProps {
 
 const InvoiceCreationForm = ({ onSave, onCancel }: InvoiceCreationFormProps) => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
   const [paymentTerms, setPaymentTerms] = useState('Net 30');
   const [selectedProduct, setSelectedProduct] = useState('');
+  const [productSearchTerm, setProductSearchTerm] = useState('');
+  const [lotSearchTerm, setLotSearchTerm] = useState('');
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [selectedLots, setSelectedLots] = useState<Set<string>>(new Set());
   const [discount, setDiscount] = useState(0);
@@ -102,8 +106,38 @@ const InvoiceCreationForm = ({ onSave, onCancel }: InvoiceCreationFormProps) => 
     { code: 'BELL890', productName: 'Red Bell Peppers', supplier: 'Greenhouse Partners', receivedDate: '2024-01-15', availableQuantity: 40, unitPrice: 4.25, costPrice: 2.80 }
   ];
 
+  // Filter customers based on search term
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearchTerm) return mockCustomers;
+    return mockCustomers.filter(customer => 
+      customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+      customer.email.toLowerCase().includes(customerSearchTerm.toLowerCase())
+    );
+  }, [customerSearchTerm]);
+
+  // Filter products based on search term
   const uniqueProducts = [...new Set(mockProductLots.map(lot => lot.productName))];
-  const filteredLots = selectedProduct ? mockProductLots.filter(lot => lot.productName === selectedProduct) : [];
+  const filteredProducts = useMemo(() => {
+    if (!productSearchTerm) return uniqueProducts;
+    return uniqueProducts.filter(product => 
+      product.toLowerCase().includes(productSearchTerm.toLowerCase())
+    );
+  }, [productSearchTerm, uniqueProducts]);
+
+  // Filter lots based on search term and selected product
+  const filteredLots = useMemo(() => {
+    let lots = selectedProduct ? mockProductLots.filter(lot => lot.productName === selectedProduct) : [];
+    
+    if (lotSearchTerm) {
+      lots = lots.filter(lot => 
+        lot.code.toLowerCase().includes(lotSearchTerm.toLowerCase()) ||
+        lot.supplier.toLowerCase().includes(lotSearchTerm.toLowerCase()) ||
+        lot.receivedDate.includes(lotSearchTerm)
+      );
+    }
+    
+    return lots;
+  }, [selectedProduct, lotSearchTerm]);
 
   const toggleLotSelection = (lotCode: string) => {
     const newSelection = new Set(selectedLots);
@@ -194,140 +228,171 @@ const InvoiceCreationForm = ({ onSave, onCancel }: InvoiceCreationFormProps) => 
       {/* Left Panel - Product & Customer Input */}
       <div className="w-1/2 border-r border-gray-200 dark:border-gray-700 flex flex-col">
         {/* Customer & Invoice Details Header */}
-        <div className="flex-shrink-0 p-4 border-b bg-gray-50 dark:bg-gray-800">
-          <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="flex-shrink-0 p-3 border-b bg-gray-50 dark:bg-gray-800">
+          <div className="grid grid-cols-3 gap-3 mb-3">
             <div>
-              <Label className="text-sm font-medium mb-2 block flex items-center">
-                <User className="w-4 h-4 mr-1" />
+              <Label className="text-xs font-medium mb-1 block flex items-center">
+                <User className="w-3 h-3 mr-1" />
                 Customer
               </Label>
-              <Select value={selectedCustomer?.id || ''} onValueChange={(value) => {
-                const customer = mockCustomers.find(c => c.id === value);
-                setSelectedCustomer(customer || null);
-              }}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select customer..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockCustomers.map(customer => (
-                    <SelectItem key={customer.id} value={customer.id}>
-                      <div>
-                        <div className="font-medium">{customer.name}</div>
-                        <div className="text-xs text-gray-500">{customer.email}</div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Select value={selectedCustomer?.id || ''} onValueChange={(value) => {
+                  const customer = mockCustomers.find(c => c.id === value);
+                  setSelectedCustomer(customer || null);
+                }}>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue placeholder="Search customer..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <div className="p-2">
+                      <Input
+                        placeholder="Search customers..."
+                        value={customerSearchTerm}
+                        onChange={(e) => setCustomerSearchTerm(e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    {filteredCustomers.map(customer => (
+                      <SelectItem key={customer.id} value={customer.id}>
+                        <div>
+                          <div className="font-medium text-sm">{customer.name}</div>
+                          <div className="text-xs text-gray-500">{customer.email}</div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
-              <Label className="text-sm font-medium mb-2 block flex items-center">
-                <Calendar className="w-4 h-4 mr-1" />
-                Invoice Date
+              <Label className="text-xs font-medium mb-1 block flex items-center">
+                <Calendar className="w-3 h-3 mr-1" />
+                Date
               </Label>
               <Input
                 type="date"
                 value={invoiceDate}
                 onChange={(e) => setInvoiceDate(e.target.value)}
-                className="h-9"
+                className="h-8 text-sm"
               />
             </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-sm font-medium mb-2 block">Due Date</Label>
+              <Label className="text-xs font-medium mb-1 block">Due Date</Label>
               <Input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="h-9"
+                className="h-8 text-sm"
               />
             </div>
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Payment Terms</Label>
-              <Select value={paymentTerms} onValueChange={setPaymentTerms}>
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Net 15">Net 15</SelectItem>
-                  <SelectItem value="Net 30">Net 30</SelectItem>
-                  <SelectItem value="Net 60">Net 60</SelectItem>
-                  <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          </div>
+          
+          <div>
+            <Label className="text-xs font-medium mb-1 block">Payment Terms</Label>
+            <Select value={paymentTerms} onValueChange={setPaymentTerms}>
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Net 15">Net 15</SelectItem>
+                <SelectItem value="Net 30">Net 30</SelectItem>
+                <SelectItem value="Net 60">Net 60</SelectItem>
+                <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {/* Product & Lot Selection */}
-        <div className="flex-1 p-4 overflow-hidden flex flex-col">
-          <div className="mb-4">
-            <Label className="text-sm font-medium mb-2 block flex items-center">
-              <Package className="w-4 h-4 mr-1" />
+        <div className="flex-1 p-3 overflow-hidden flex flex-col">
+          <div className="mb-3">
+            <Label className="text-xs font-medium mb-1 block flex items-center">
+              <Package className="w-3 h-3 mr-1" />
               Select Product
             </Label>
-            <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a product..." />
-              </SelectTrigger>
-              <SelectContent>
-                {uniqueProducts.map(product => (
-                  <SelectItem key={product} value={product}>{product}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Search products..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <div className="p-2">
+                    <Input
+                      placeholder="Search products..."
+                      value={productSearchTerm}
+                      onChange={(e) => setProductSearchTerm(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  {filteredProducts.map(product => (
+                    <SelectItem key={product} value={product}>{product}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {selectedProduct && (
             <div className="flex-1 overflow-hidden flex flex-col">
-              <div className="flex justify-between items-center mb-3">
+              <div className="flex justify-between items-center mb-2">
                 <h3 className="text-sm font-medium">Available Product Lots</h3>
                 <Button 
                   onClick={addSelectedLotsToInvoice}
                   disabled={selectedLots.size === 0}
                   size="sm"
+                  className="h-7 text-xs"
                 >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add to Invoice ({selectedLots.size})
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add ({selectedLots.size})
                 </Button>
+              </div>
+              
+              <div className="mb-2">
+                <div className="relative">
+                  <Search className="absolute left-2 top-1.5 h-3 w-3 text-gray-400" />
+                  <Input
+                    placeholder="Search by lot code, supplier, or date..."
+                    value={lotSearchTerm}
+                    onChange={(e) => setLotSearchTerm(e.target.value)}
+                    className="pl-7 h-7 text-xs"
+                  />
+                </div>
               </div>
               
               <div className="flex-1 overflow-y-auto border rounded-lg">
                 <Table>
                   <TableHeader className="sticky top-0 bg-white dark:bg-gray-800">
                     <TableRow>
-                      <TableHead className="w-12"></TableHead>
-                      <TableHead>Lot Code</TableHead>
-                      <TableHead>Supplier</TableHead>
-                      <TableHead>Received</TableHead>
-                      <TableHead>Available</TableHead>
-                      <TableHead>Unit Price</TableHead>
+                      <TableHead className="w-8 p-1"></TableHead>
+                      <TableHead className="p-2 text-xs">Lot</TableHead>
+                      <TableHead className="p-2 text-xs">Supplier</TableHead>
+                      <TableHead className="p-2 text-xs">Date</TableHead>
+                      <TableHead className="p-2 text-xs">Qty</TableHead>
+                      <TableHead className="p-2 text-xs">Price</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredLots.map(lot => (
                       <TableRow 
                         key={lot.code}
-                        className={`cursor-pointer ${selectedLots.has(lot.code) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                        className={`cursor-pointer text-xs ${selectedLots.has(lot.code) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
                         onClick={() => toggleLotSelection(lot.code)}
                       >
-                        <TableCell>
+                        <TableCell className="p-1">
                           <input
                             type="checkbox"
                             checked={selectedLots.has(lot.code)}
                             onChange={() => toggleLotSelection(lot.code)}
-                            className="rounded"
+                            className="rounded w-3 h-3"
                           />
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{lot.code}</Badge>
+                        <TableCell className="p-2">
+                          <Badge variant="outline" className="text-xs px-1 py-0">{lot.code}</Badge>
                         </TableCell>
-                        <TableCell className="text-sm">{lot.supplier}</TableCell>
-                        <TableCell className="text-sm">{new Date(lot.receivedDate).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-sm font-medium">{lot.availableQuantity}</TableCell>
-                        <TableCell className="text-sm font-medium">${lot.unitPrice.toFixed(2)}</TableCell>
+                        <TableCell className="p-2 text-xs">{lot.supplier}</TableCell>
+                        <TableCell className="p-2 text-xs">{new Date(lot.receivedDate).toLocaleDateString()}</TableCell>
+                        <TableCell className="p-2 text-xs font-medium">{lot.availableQuantity}</TableCell>
+                        <TableCell className="p-2 text-xs font-medium">${lot.unitPrice.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -341,9 +406,9 @@ const InvoiceCreationForm = ({ onSave, onCancel }: InvoiceCreationFormProps) => 
       {/* Right Panel - Invoice Builder */}
       <div className="w-1/2 flex flex-col">
         {/* Invoice Line Items Table */}
-        <div className="flex-1 p-4 overflow-hidden flex flex-col">
-          <h3 className="text-lg font-medium mb-4 flex items-center">
-            <DollarSign className="w-5 h-5 mr-2" />
+        <div className="flex-1 p-3 overflow-hidden flex flex-col">
+          <h3 className="text-base font-medium mb-3 flex items-center">
+            <DollarSign className="w-4 h-4 mr-2" />
             Invoice Items
           </h3>
           
@@ -351,70 +416,63 @@ const InvoiceCreationForm = ({ onSave, onCancel }: InvoiceCreationFormProps) => 
             <Table>
               <TableHeader className="sticky top-0 bg-white dark:bg-gray-800">
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Lot Details</TableHead>
-                  <TableHead className="w-20">Qty</TableHead>
-                  <TableHead className="w-24">Unit Price</TableHead>
-                  <TableHead className="w-20">Tax %</TableHead>
-                  <TableHead className="w-24">Line Total</TableHead>
-                  <TableHead className="w-12"></TableHead>
+                  <TableHead className="p-2 text-xs w-[120px]">Product</TableHead>
+                  <TableHead className="p-2 text-xs w-[80px]">Lot</TableHead>
+                  <TableHead className="p-2 text-xs w-[50px]">Qty</TableHead>
+                  <TableHead className="p-2 text-xs w-[70px]">Price</TableHead>
+                  <TableHead className="p-2 text-xs w-[70px]">Tax</TableHead>
+                  <TableHead className="p-2 text-xs w-[80px]">Total</TableHead>
+                  <TableHead className="p-2 text-xs w-[40px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12 text-gray-500">
-                      <Package className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                      <p>No items added yet</p>
-                      <p className="text-sm">Select products from the left panel to add them here</p>
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      <Package className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm">No items added</p>
+                      <p className="text-xs">Select products from the left panel</p>
                     </TableCell>
                   </TableRow>
                 ) : (
                   items.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium">{item.productName}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{item.lotCode}</Badge>
+                      <TableCell className="p-2 font-medium text-xs">{item.productName}</TableCell>
+                      <TableCell className="p-2">
+                        <Badge variant="outline" className="text-xs px-1 py-0">{item.lotCode}</Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="p-2">
                         <Input
                           type="number"
                           min="1"
                           value={item.quantity}
                           onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
-                          className="w-16 h-8"
+                          className="w-12 h-6 text-xs p-1"
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="p-2">
                         <Input
                           type="number"
                           step="0.01"
                           value={item.unitPrice}
                           onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                          className="w-20 h-8"
+                          className="w-16 h-6 text-xs p-1"
                         />
                       </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={item.taxRate}
-                          onChange={(e) => updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)}
-                          className="w-16 h-8"
-                        />
+                      <TableCell className="p-2 text-xs font-medium text-gray-600">
+                        ${(item.quantity * item.unitPrice * item.taxRate / 100).toFixed(2)}
                       </TableCell>
-                      <TableCell className="font-medium text-green-600">
+                      <TableCell className="p-2 font-medium text-green-600 text-xs">
                         ${item.lineTotal.toFixed(2)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="p-2">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => removeItem(index)}
-                          className="text-red-500 hover:text-red-700 h-8 w-8"
+                          className="text-red-500 hover:text-red-700 h-6 w-6"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -426,50 +484,55 @@ const InvoiceCreationForm = ({ onSave, onCancel }: InvoiceCreationFormProps) => 
         </div>
 
         {/* Invoice-Level Adjustments */}
-        <div className="flex-shrink-0 p-4 border-t bg-gray-50 dark:bg-gray-800">
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Discount Type</Label>
-                <Select value={discountType} onValueChange={(value: 'percentage' | 'amount') => setDiscountType(value)}>
-                  <SelectTrigger className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percentage">Percentage (%)</SelectItem>
-                    <SelectItem value="amount">Dollar Amount ($)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm font-medium mb-2 block">
-                  Discount {discountType === 'percentage' ? '(%)' : '($)'}
+        <div className="flex-shrink-0 p-3 border-t bg-gray-50 dark:bg-gray-800">
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={discountType === 'percentage'}
+                  onCheckedChange={(checked) => setDiscountType(checked ? 'percentage' : 'amount')}
+                />
+                <Label className="text-xs font-medium flex items-center">
+                  {discountType === 'percentage' ? (
+                    <>
+                      <Percent className="w-3 h-3 mr-1" />
+                      Percentage
+                    </>
+                  ) : (
+                    <>
+                      <DollarSign className="w-3 h-3 mr-1" />
+                      Amount
+                    </>
+                  )}
                 </Label>
+              </div>
+              <div className="flex-1">
                 <Input
                   type="number"
                   min="0"
                   step={discountType === 'percentage' ? '1' : '0.01'}
                   value={discount}
                   onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                  className="h-9"
+                  placeholder={discountType === 'percentage' ? '0%' : '$0.00'}
+                  className="h-7 text-xs"
                 />
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-700 p-4 rounded-lg space-y-2">
-              <div className="flex justify-between text-sm">
+            <div className="bg-white dark:bg-gray-700 p-3 rounded-lg space-y-1">
+              <div className="flex justify-between text-xs">
                 <span>Subtotal:</span>
                 <span className="font-medium">${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm text-red-600">
+              <div className="flex justify-between text-xs text-red-600">
                 <span>Discount:</span>
                 <span>-${discountAmount.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs">
                 <span>Tax Total:</span>
                 <span className="font-medium">${taxTotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between py-2 border-t font-bold text-lg">
+              <div className="flex justify-between py-1 border-t font-bold text-sm">
                 <span>Invoice Total:</span>
                 <span className="text-green-600">${grandTotal.toFixed(2)}</span>
               </div>
@@ -478,21 +541,23 @@ const InvoiceCreationForm = ({ onSave, onCancel }: InvoiceCreationFormProps) => 
         </div>
 
         {/* Action Buttons */}
-        <div className="flex-shrink-0 p-4 border-t">
-          <div className="flex justify-end space-x-3">
-            <Button variant="ghost" onClick={onCancel}>
+        <div className="flex-shrink-0 p-3 border-t">
+          <div className="flex justify-end space-x-2">
+            <Button variant="ghost" onClick={onCancel} className="h-8 text-xs">
               Cancel
             </Button>
             <Button
               onClick={() => handleSubmit('draft')}
               variant="outline"
               disabled={!selectedCustomer || items.length === 0}
+              className="h-8 text-xs"
             >
               Save as Draft
             </Button>
             <Button
               onClick={() => handleSubmit('final')}
               disabled={!selectedCustomer || items.length === 0}
+              className="h-8 text-xs"
             >
               Save Invoice
             </Button>
