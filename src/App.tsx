@@ -12,6 +12,8 @@ import Sales from "./pages/Sales";
 import Customers from "./pages/Customers";
 import Staff from "./pages/Staff";
 import Onboarding from "./pages/Onboarding";
+import Login from "./pages/Login";
+import StaffInviteRegistration from "./pages/StaffInviteRegistration";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/staff-invite" element={<StaffInviteRegistration />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<Dashboard />} />

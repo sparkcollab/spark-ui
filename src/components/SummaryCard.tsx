@@ -7,7 +7,7 @@ interface SummaryCardProps {
   value: string | number;
   icon: LucideIcon;
   description?: string;
-  color?: 'blue' | 'green' | 'orange' | 'purple';
+  color?: 'blue' | 'green' | 'orange' | 'purple' | 'yellow';
 }
 
 const SummaryCard = ({ title, value, icon: Icon, description, color = 'blue' }: SummaryCardProps) => {
@@ -19,6 +19,8 @@ const SummaryCard = ({ title, value, icon: Icon, description, color = 'blue' }: 
         return 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400';
       case 'purple':
         return 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400';
+        case 'yellow':
+        return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-600 dark:text-yellow-400';
       default:
         return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400';
     }
