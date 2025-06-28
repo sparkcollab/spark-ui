@@ -455,7 +455,7 @@ const Sales = () => {
 
       {/* Right Drawer */}
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <SheetContent className="w-full sm:max-w-6xl">
+        <SheetContent className="w-full sm:max-w-[95vw] lg:max-w-[90vw]">
           <SheetHeader>
             <SheetTitle>
               {drawerAction === 'create' && 'Create New Invoice'}
