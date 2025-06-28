@@ -11,6 +11,7 @@ import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
 import Customers from "./pages/Customers";
 import Staff from "./pages/Staff";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<Dashboard />} />
               <Route path="inventory" element={<Inventory />} />
