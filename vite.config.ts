@@ -8,6 +8,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    allowedHosts: [
+       "uniformly-selected-mollusk.ngrok-free.app",
+       "sparkplus.ddns.net",
+      ],
   },
   plugins: [
     react(),
