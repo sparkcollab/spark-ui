@@ -8,7 +8,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    origin: ["https://uniformly-selected-mollusk.ngrok-free.app", "http://backend"],
+    origin: "https://uniformly-selected-mollusk.ngrok-free.app",
+    cors: {
+      origin: [
+        "https://uniformly-selected-mollusk.ngrok-free.app",
+        "http://backend"
+      ],
     allowedHosts: [
        "uniformly-selected-mollusk.ngrok-free.app",
        "sparkplus.ddns.net",
