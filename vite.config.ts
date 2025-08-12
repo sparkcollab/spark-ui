@@ -14,10 +14,11 @@ export default defineConfig(({ mode }) => ({
         "https://uniformly-selected-mollusk.ngrok-free.app",
         "http://backend"
       ],
+      },
     allowedHosts: [
        "uniformly-selected-mollusk.ngrok-free.app",
        "sparkplus.ddns.net",
-      ],
+      ]
   },
   plugins: [
     react(),
