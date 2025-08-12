@@ -13,6 +13,7 @@ RUN npm run build
 FROM nginx:alpine
 
 COPY nginx.conf /etc/nginx/nginx.conf
+
 ENV VITE_API_URL=http://uniformly-selected-mollusk.ngrok-free.app/api/core
 
 COPY --from=build /app/dist /usr/share/nginx/html
