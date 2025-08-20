@@ -1,0 +1,19 @@
+{
+  "name": "@spark/shared",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "source": "src/index.ts",
+  "sideEffects": false,
+  "files": ["dist"],
+  "scripts": {
+    "dev": "tsc -w --project tsconfig.json",
+    "build": "tsc --project tsconfig.json",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "rimraf": "^5.0.5"
+  }
+}
