@@ -1,0 +1,14 @@
+# dependencies
+node_modules
+
+# build outputs
+.dist
+build
+dist
+.expo
+.expo-shared
+.turbo
+
+# misc
+.DS_Store
+.env*
