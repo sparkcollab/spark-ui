@@ -9,12 +9,12 @@ import {
 } from "@/components/ui/input-otp";
 import { ArrowLeft, Mail, Phone, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useStore } from "@/store/useStore";
 import { RequestTokenPayload } from "@/types";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { requestToken, validateToken, userState } = useStore();
+  const { requestToken, validateToken } = useAuthStore();
   const [step, setStep] = useState<"input" | "confirmation" | "otp">("input");
   const [contactMethod, setContactMethod] = useState<"email" | "phone">(
     "email"

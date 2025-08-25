@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CreditCard, Warehouse } from "lucide-react";
 import { OnboardingData } from "@/pages/Onboarding";
-import { useStore } from "@/store/useStore";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface WarehousePaymentStepProps {
   data: OnboardingData;
@@ -23,7 +23,7 @@ const WarehousePaymentStep = ({
 }: WarehousePaymentStepProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
-  const { registerUser } = useStore();
+  const { registerUser } = useAuthStore();
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};

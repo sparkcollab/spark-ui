@@ -1,58 +1,101 @@
-
-import React, { useState } from 'react';
-import { UserCheck, Plus, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
-import SummaryCard from '../components/SummaryCard';
-import StaffInviteModal from '@/components/StaffInviteModal';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useState } from "react";
+import {
+  UserCheck,
+  Plus,
+  Clock,
+  CheckCircle,
+  XCircle,
+  CircleAlert,
+  EditIcon,
+  Trash2,
+} from "lucide-react";
+import SummaryCard from "../components/SummaryCard";
+import StaffInviteModal from "@/components/StaffInviteModal";
+import { Button } from "@/components/ui/button";
+import { InviteStaffMember } from "@/types/Staff";
+import { useStaffStore } from "@/store/useStaffStore";
+import StaffUpdateModal from "@/components/StaffUpdateModal";
+import StaffDeleteModal from "@/components/StaffDeleteModal";
 
 const Staff = () => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [staffMembers, setStaffMembers] = useState([
-    { id: '1', name: 'Alice Johnson', role: 'Manager', department: 'Operations', email: 'alice@example.com', phone: '+1 (555) 123-4567', startDate: '2023-01-15', status: 'Active' },
-    { id: '2', name: 'Bob Wilson', role: 'Inventory Clerk', department: 'Warehouse', email: 'bob@example.com', phone: '+1 (555) 234-5678', startDate: '2023-03-22', status: 'Active' },
-    { id: '3', name: 'Carol Davis', role: 'Sales Associate', department: 'Sales', email: 'carol@example.com', phone: '+1 (555) 345-6789', startDate: '2023-06-10', status: 'Active' },
-    { id: '4', name: 'David Miller', role: 'Accountant', department: 'Finance', email: 'david@example.com', phone: '+1 (555) 456-7890', startDate: '2022-11-08', status: 'On Leave' },
-  ]);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState({
+    open: false,
+    data: null,
+  });
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState({
+    open: false,
+    data: null,
+  });
+  const [staffMembers, setStaffMembers] = useState([]);
+  const {
+    staffList,
+    fetchStaffList,
+    inviteStaffMember,
+    updateStaffMember,
+    deleteStaffMember,
+  } = useStaffStore();
 
-  const handleInviteSent = (newStaffMember: any) => {
-    setStaffMembers(prev => [...prev, newStaffMember]);
+  useEffect(() => {
+    fetchStaffList();
+  }, [fetchStaffList]);
+
+  useEffect(() => {
+    setStaffMembers(staffList);
+  }, [staffList]);
+
+  const handleInviteSent = (newStaffMember: InviteStaffMember) => {
+    inviteStaffMember(newStaffMember);
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Active':
+      case "Active":
         return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'Pending':
+      case "Pending":
         return <Clock className="w-4 h-4 text-yellow-600" />;
-      case 'On Leave':
+      case "Inactive":
         return <XCircle className="w-4 h-4 text-orange-600" />;
       default:
         return null;
     }
   };
+  const handleUpdateStaffmember = async (id, data) => {
+    // Implement update logic here
+    await updateStaffMember(id, data);
+  };
+
+  const handleDeleteStaffMember = async (id) => {
+    // Implement delete logic here
+    await deleteStaffMember(id);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'Pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'On Leave':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+      case "Active":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "Pending":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      case "Inactive":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     }
   };
 
-  const pendingInvites = staffMembers.filter(member => member.status === 'Pending').length;
-  const activeStaff = staffMembers.filter(member => member.status === 'Active').length;
-  const onLeave = staffMembers.filter(member => member.status === 'On Leave').length;
+  const pendingInvites = staffMembers.filter(
+    (member) => member.status === "Pending"
+  ).length;
+  const activeStaff = staffMembers.filter((member) => member.active).length;
+  const inActive = staffMembers.filter((member) => !member.active).length;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Staff</h1>
-        <Button 
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Staff
+        </h1>
+        <Button
           className="flex items-center space-x-2"
           onClick={() => setIsInviteModalOpen(true)}
         >
@@ -85,10 +128,10 @@ const Staff = () => {
           color="yellow"
         />
         <SummaryCard
-          title="On Leave"
-          value={onLeave.toString()}
-          icon={Calendar}
-          description="Currently on leave"
+          title="Inactive"
+          value={inActive.toString()}
+          icon={CircleAlert}
+          description="Currently Inactive"
           color="orange"
         />
       </div>
@@ -114,11 +157,17 @@ const Staff = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {staffMembers.map((staff) => (
-                <tr key={staff.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr
+                  key={staff.id}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {staff.name}
@@ -127,20 +176,50 @@ const Staff = () => {
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-500 dark:text-gray-300">
                       <div>{staff.email}</div>
-                      {staff.phone && <div className="text-xs">{staff.phone}</div>}
+                      {staff.phone && (
+                        <div className="text-xs">{staff.phone}</div>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
                     <div>{staff.role}</div>
-                    {staff.department && <div className="text-xs">{staff.department}</div>}
+                    {staff.department && (
+                      <div className="text-xs">{staff.department}</div>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
-                    {staff.status === 'Pending' ? staff.startDate : staff.startDate}
+                    {new Date(staff.createdAt).toDateString()}
+                    <br />
+                    {new Date(staff.createdAt).toTimeString()}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center space-x-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(staff.status)}`}>
-                      {getStatusIcon(staff.status)}
-                      <span>{staff.status}</span>
+                    <span
+                      className={`inline-flex items-center space-x-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                        staff.status
+                      )}`}
+                    >
+                      {getStatusIcon(staff.active ? "Active" : "Inactive")}
+                      <span>{staff.active ? "Active" : "Inactive"}</span>
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex items-center space-x-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                        staff.status
+                      )}`}
+                    >
+                      <EditIcon
+                        className="w-4 h-4 text-gray-500 dark:text-gray-300 cursor-pointer"
+                        onClick={() =>
+                          setIsUpdateModalOpen({ open: true, data: staff })
+                        }
+                      />
+                      <Trash2
+                        className="w-4 h-4 text-red-500 dark:text-red-400 cursor-pointer"
+                        onClick={() =>
+                          setIsDeleteModalOpen({ open: true, data: staff })
+                        }
+                      />
                     </span>
                   </td>
                 </tr>
@@ -154,6 +233,20 @@ const Staff = () => {
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         onInviteSent={handleInviteSent}
+      />
+
+      <StaffUpdateModal
+        staffData={isUpdateModalOpen.data}
+        isOpen={isUpdateModalOpen.open}
+        onClose={() => setIsUpdateModalOpen({ open: false, data: null })}
+        onUpdateSent={handleUpdateStaffmember}
+      />
+
+      <StaffDeleteModal
+        staffData={isDeleteModalOpen.data}
+        isOpen={isDeleteModalOpen.open}
+        onClose={() => setIsDeleteModalOpen({ open: false, data: null })}
+        onDeleteSent={handleDeleteStaffMember}
       />
     </div>
   );

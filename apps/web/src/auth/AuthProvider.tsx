@@ -1,20 +1,28 @@
 import React, { useEffect } from "react";
-import { useStore } from "@/store/useStore";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { userState } = useStore();
+  const { userState, validateSession } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+
   useEffect(() => {
-    if (!userState?.token) {
-      const isOnPublicPage =
-        location.pathname === "/login" || location.pathname === "/onboarding";
-      if (!isOnPublicPage) {
-        navigate("/login", { replace: true });
+    const checkSession = async () => {
+      try {
+        await validateSession();
+      } catch (error) {
+        console.error("Session validation failed:", error);
+        if (
+          location.pathname !== "/login" &&
+          location.pathname !== "/onboarding"
+        ) {
+          navigate("/login", { replace: true });
+        }
       }
-    }
-  }, [navigate, location.pathname, userState]);
+    };
+    if (!userState?.token) checkSession();
+  }, [validateSession, navigate, location.pathname, userState]);
 
   if (!userState?.token) return null;
   return children;

@@ -1,27 +1,45 @@
+import React, { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { UserPlus, Mail, Phone, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { StaffMember, UpdateStaffMember } from "@/types/Staff";
+import { set } from "date-fns";
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { UserPlus, Mail, Phone, User } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { InviteStaffMember } from '@/types/Staff';
-
-interface StaffInviteModalProps {
+interface StaffUpdateModalProps {
+  staffData: StaffMember;
   isOpen: boolean;
   onClose: () => void;
-  onInviteSent: (staffData: InviteStaffMember) => void;
+  onUpdateSent: (id: string, staffData: UpdateStaffMember) => void;
 }
 
-const StaffInviteModal = ({ isOpen, onClose, onInviteSent }: StaffInviteModalProps) => {
+const StaffUpdateModal = ({
+  staffData,
+  isOpen,
+  onClose,
+  onUpdateSent,
+}: StaffUpdateModalProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    role: 'STAFF'
+    name: staffData?.name || "",
+    email: staffData?.email || "",
+    phone: staffData?.phone || "",
+    role: staffData?.role || "STAFF",
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -30,49 +48,51 @@ const StaffInviteModal = ({ isOpen, onClose, onInviteSent }: StaffInviteModalPro
     setIsLoading(true);
 
     try {
-      // Here you would call your API to send the staff invite
-      console.log('Sending staff invite:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Invite Sent!",
-        description: `Staff invitation has been sent to ${formData.email}`,
-      });
-
       // Add the new staff member to the list with pending status
-      const newStaffMember = {
+      const staffMember = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         role: formData.role,
       };
 
-      onInviteSent(newStaffMember);
-      
+      await onUpdateSent(staffData.id, staffMember);
+      toast({
+        title: "Update Request Sent!",
+        description: `Staff has been updated for ${formData.name}`,
+      });
+
       // Reset form
       setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        role: 'STAFF'
+        name: "",
+        email: "",
+        phone: "",
+        role: "STAFF",
       });
-      
+
       onClose();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to send invite. Please try again.",
-        variant: "destructive"
+        description: "Failed to update. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    setFormData({
+      name: staffData?.name || "",
+      email: staffData?.email || "",
+      phone: staffData?.phone || "",
+      role: staffData?.role || "STAFF",
+    });
+  }, [staffData]);
+
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -81,10 +101,10 @@ const StaffInviteModal = ({ isOpen, onClose, onInviteSent }: StaffInviteModalPro
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <UserPlus className="w-5 h-5 text-blue-600" />
-            <span>Invite Staff Member</span>
+            <span>Update Staff Member</span>
           </DialogTitle>
           <DialogDescription>
-            Send an invitation to join your team. They'll receive a secure link to complete registration.
+            You can edit the staff details below.
           </DialogDescription>
         </DialogHeader>
 
@@ -97,7 +117,7 @@ const StaffInviteModal = ({ isOpen, onClose, onInviteSent }: StaffInviteModalPro
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
+              onChange={(e) => handleInputChange("name", e.target.value)}
               placeholder="Enter full name"
               required
               className="mt-1"
@@ -113,7 +133,7 @@ const StaffInviteModal = ({ isOpen, onClose, onInviteSent }: StaffInviteModalPro
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
+              onChange={(e) => handleInputChange("email", e.target.value)}
               placeholder="email@example.com"
               required
               className="mt-1"
@@ -129,7 +149,7 @@ const StaffInviteModal = ({ isOpen, onClose, onInviteSent }: StaffInviteModalPro
               id="phone"
               type="tel"
               value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
+              onChange={(e) => handleInputChange("phone", e.target.value)}
               placeholder="+1 (555) 123-4567"
               className="mt-1"
             />
@@ -137,7 +157,10 @@ const StaffInviteModal = ({ isOpen, onClose, onInviteSent }: StaffInviteModalPro
 
           <div>
             <Label htmlFor="role">Role</Label>
-            <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
+            <Select
+              value={formData.role}
+              onValueChange={(value) => handleInputChange("role", value)}
+            >
               <SelectTrigger className="mt-1">
                 <SelectValue />
               </SelectTrigger>
@@ -158,12 +181,8 @@ const StaffInviteModal = ({ isOpen, onClose, onInviteSent }: StaffInviteModalPro
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Sending...' : 'Send Invite'}
+            <Button type="submit" className="flex-1" disabled={isLoading}>
+              {isLoading ? "Updating..." : "Update"}
             </Button>
           </div>
         </form>
@@ -172,4 +191,4 @@ const StaffInviteModal = ({ isOpen, onClose, onInviteSent }: StaffInviteModalPro
   );
 };
 
-export default StaffInviteModal;
+export default StaffUpdateModal;

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Menu, Bell, Sun, Moon, User, LogOut } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
-import { useStore } from "@/store/useStore";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface TopNavbarProps {
   onToggleSidebar: () => void;
@@ -12,7 +12,7 @@ interface TopNavbarProps {
 const TopNavbar = ({ onToggleSidebar, sidebarCollapsed }: TopNavbarProps) => {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const { setUserState, userState, logout } = useStore();
+  const { setUserState, userState, logout } = useAuthStore();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   const handleLogout = () => logout();
