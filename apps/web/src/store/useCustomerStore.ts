@@ -1,21 +1,20 @@
 import axiosClient from "@/api/axiosClient";
 import { useAuthStore } from "./useAuthStore";
 import { create } from "zustand";
+import { Customer, CustomerResponse } from "@/types/Customer";
 
 interface CustomerState {
-  customers: Customer[];
-  customerDetails: any | null;
-  setCustomers: (customers: any[]) => void;
-  setCustomerDetails: (customerDetails: any | null) => void;
+  customers: CustomerResponse[];
+  setCustomers: (customers: CustomerResponse[]) => void;
+  postCustomer: (customerData: Customer) => Promise<void>;
   fetchCustomers: () => Promise<void>;
-  fetchCustomerDetails: (customerId: string) => Promise<void>;
+  updateCustomer: (id: string, customerData: Customer) => Promise<void>;
+  deleteCustomer: (id: string) => Promise<void>;
 }
 
 export const useCustomerStore = create<CustomerState>()((set) => ({
   customers: [],
-  customerDetails: null,
   setCustomers: (customers) => set({ customers }),
-  setCustomerDetails: (customerDetails) => set({ customerDetails }),
   postCustomer: async (customerData) => {
     try {
       const { data } = await axiosClient.post(
@@ -26,7 +25,6 @@ export const useCustomerStore = create<CustomerState>()((set) => ({
         customers: [...state.customers, data],
       }));
     } catch (error) {
-      console.error("Error adding customer:", error);
       throw new Error(error.response?.data || "Failed to add customer");
     }
   },
@@ -38,21 +36,34 @@ export const useCustomerStore = create<CustomerState>()((set) => ({
       );
       set({ customers: data.content });
     } catch (error) {
-      console.error("Error fetching customers:", error);
       throw new Error(error.response?.data || "Failed to fetch customers");
     }
   },
-  fetchCustomerDetails: async (customerId: string) => {
+  updateCustomer: async (id, customerData) => {
     try {
-      const { data } = await axiosClient.get(
-        `org/${useAuthStore.getState().userState.orgId}/counterparty/${customerId}`
+      const { data } = await axiosClient.put(
+        `org/${useAuthStore.getState().userState.orgId}/counterparty/${id}`,
+        customerData
       );
-      set({ customerDetails: data });
+      set((state) => ({
+        customers: state.customers.map((customer) =>
+          customer.id === id ? data : customer
+        ),
+      }));
     } catch (error) {
-      console.error("Error fetching customer details:", error);
-      throw new Error(
-        error.response?.data || "Failed to fetch customer details"
+      throw new Error(error.response?.data || "Failed to update customer");
+    }
+  },
+  deleteCustomer: async (id) => {
+    try {
+      await axiosClient.delete(
+        `org/${useAuthStore.getState().userState.orgId}/counterparty/${id}`
       );
+      set((state) => ({
+        customers: state.customers.filter((customer) => customer.id !== id),
+      }));
+    } catch (error) {
+      throw new Error(error.response?.data || "Failed to delete customer");
     }
   },
 }));
