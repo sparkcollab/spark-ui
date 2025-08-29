@@ -4,7 +4,7 @@ import axios, { AxiosError } from "axios";
 
 // Create an Axios instance
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://api.example.com",
+  baseURL: import.meta.env.VITE_API_URL || "/api/core",
   timeout: 10000,
   withCredentials: true, // if you need to send cookies with requests
 });
