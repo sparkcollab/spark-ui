@@ -1,94 +1,93 @@
+import React, { useEffect, useState } from "react";
+import {
+  Search,
+  Plus,
+  Package,
+  DollarSign,
+  AlertTriangle,
+  MoreHorizontal,
+  Truck,
+  RotateCcw,
+  Edit,
+  BarChart3,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import SummaryCard from "../SummaryCard";
+import InventoryActionDrawer from "./InventoryActionDrawer";
+import { useInventory } from "@/store/useInventory";
+import { Item } from "@/types/inventory";
+import { useAuthStore } from "@/store/useAuthStore";
 
-import React, { useState } from 'react';
-import { Search, Plus, Package, DollarSign, AlertTriangle, MoreHorizontal, Truck, RotateCcw, Edit, BarChart3 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import SummaryCard from '../SummaryCard';
-import InventoryActionDrawer from './InventoryActionDrawer';
-
-interface Product {
-  id: string;
-  name: string;
-  sku: string;
-  category: string;
-  subcategory: string;
-  stock: number;
-  unitOfMeasure: string;
-  sellingPrice: number;
-  lowStockThreshold: number;
-  lastDelivery?: string;
-  activeLots: number;
-}
-
-type DrawerAction = 'add-product' | 'add-delivery' | 'return-supplier' | 'update-stock' | null;
+type DrawerAction =
+  | "add-product"
+  | "add-delivery"
+  | "return-supplier"
+  | "update-stock"
+  | null;
 
 const SimplifiedInventoryView = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerAction, setDrawerAction] = useState<DrawerAction>(null);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
-  const products: Product[] = [
-    {
-      id: '1',
-      name: 'Gala Apples',
-      sku: 'APP-GALA-001',
-      category: 'Fruits',
-      subcategory: 'Apples',
-      stock: 45,
-      unitOfMeasure: 'lbs',
-      sellingPrice: 3.99,
-      lowStockThreshold: 10,
-      lastDelivery: '2024-06-10',
-      activeLots: 2
-    },
-    {
-      id: '2',
-      name: 'Organic Bananas',
-      sku: 'BAN-ORG-001',
-      category: 'Fruits',
-      subcategory: 'Bananas',
-      stock: 25,
-      unitOfMeasure: 'lbs',
-      sellingPrice: 2.49,
-      lowStockThreshold: 15,
-      lastDelivery: '2024-06-08',
-      activeLots: 1
-    },
-    {
-      id: '3',
-      name: 'Roma Tomatoes',
-      sku: 'TOM-ROMA-001',
-      category: 'Vegetables',
-      subcategory: 'Tomatoes',
-      stock: 8,
-      unitOfMeasure: 'lbs',
-      sellingPrice: 4.99,
-      lowStockThreshold: 10,
-      lastDelivery: '2024-06-05',
-      activeLots: 1
-    }
-  ];
-
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
-    return matchesSearch && matchesCategory;
+  const [selectedProduct, setSelectedProduct] = useState<Item | null>(null);
+  const { fetchItems, items } = useInventory();
+  const { userState } = useAuthStore();
+  const [filteredProducts, setFilteredProducts] = useState<Item[]>([]);
+  const [summary, setSummary] = useState({
+    totalProducts: 0,
+    stockValue: 0,
+    lowStockItems: 0,
   });
+  const [categories, setCategories] = useState<string[]>([]);
 
-  const totalProducts = products.length;
-  const stockValue = products.reduce((sum, product) => sum + (product.stock * product.sellingPrice), 0);
-  const lowStockItems = products.filter(product => product.stock <= product.lowStockThreshold).length;
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    userState.locationId && fetchItems();
+    // Fetch products from API or state management store here
+  }, [userState?.locationId]);
 
-  const categories = [...new Set(products.map(p => p.category))];
+  useEffect(() => {
+    const filteredProducts = items.filter((product) => {
+      const matchesSearch =
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory =
+        categoryFilter === "all" || product.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    });
+    setFilteredProducts(filteredProducts);
+  }, [searchTerm, categoryFilter, items]);
+  useEffect(() => {
+    const totalProducts = items.length;
+    const stockValue = items.reduce(
+      (sum, product) => sum + product.stock * 1,
+      0
+    );
+    const lowStockItems = items.filter((product) => product.stock <= 0).length;
 
-  const handleAction = (action: DrawerAction, product?: Product) => {
+    const categories = [...new Set(items.map((p) => p.category))];
+    setSummary({ totalProducts, stockValue, lowStockItems });
+    setCategories(categories);
+  }, [items]);
+
+  const handleAction = (action: DrawerAction, product?: Item) => {
     setSelectedProduct(product || null);
     setDrawerAction(action);
     setDrawerOpen(true);
@@ -104,9 +103,11 @@ const SimplifiedInventoryView = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Inventory Management</h1>
-        <Button 
-          onClick={() => handleAction('add-product')}
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Inventory Management
+        </h1>
+        <Button
+          onClick={() => handleAction("add-product")}
           className="flex items-center space-x-2"
           size="lg"
         >
@@ -116,7 +117,7 @@ const SimplifiedInventoryView = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <SummaryCard
           title="Total Products"
           value={totalProducts}
@@ -138,7 +139,7 @@ const SimplifiedInventoryView = () => {
           description="Products below threshold"
           color="orange"
         />
-      </div>
+      </div> */}
 
       {/* Filters */}
       <Card>
@@ -159,8 +160,10 @@ const SimplifiedInventoryView = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -181,26 +184,45 @@ const SimplifiedInventoryView = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">Product</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">SKU</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">Category</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">Stock</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">Unit Price</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">Status</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">Last Delivery</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 dark:text-gray-300">Actions</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">
+                    Product
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">
+                    SKU
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">
+                    Category
+                  </th>
+                  {/* <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">
+                    Stock
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">
+                    Unit Price
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">
+                    Status
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-300">
+                    Last Delivery
+                  </th> */}
+                  <th className="text-right py-3 px-4 font-medium text-gray-500 dark:text-gray-300">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <tr
+                    key={product.id}
+                    className="border-b hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  >
                     <td className="py-4 px-4">
                       <div>
                         <div className="font-medium text-gray-900 dark:text-white">
                           {product.name}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-300">
-                          {product.category} &gt; {product.subcategory}
+                          {product.category} &gt; {product.subCategory}
                         </div>
                       </div>
                     </td>
@@ -210,7 +232,7 @@ const SimplifiedInventoryView = () => {
                     <td className="py-4 px-4 text-gray-500 dark:text-gray-300">
                       {product.category}
                     </td>
-                    <td className="py-4 px-4">
+                    {/* <td className="py-4 px-4">
                       <div className="font-medium text-gray-900 dark:text-white">
                         {product.stock} {product.unitOfMeasure}
                       </div>
@@ -229,8 +251,8 @@ const SimplifiedInventoryView = () => {
                       )}
                     </td>
                     <td className="py-4 px-4 text-gray-500 dark:text-gray-300">
-                      {product.lastDelivery || 'N/A'}
-                    </td>
+                      {product.lastDelivery || "N/A"}
+                    </td> */}
                     <td className="py-4 px-4">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -239,19 +261,33 @@ const SimplifiedInventoryView = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem onClick={() => handleAction('add-delivery', product)}>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleAction("add-delivery", product)
+                            }
+                          >
                             <Truck className="w-4 h-4 mr-2" />
                             Add Delivery
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction('return-supplier', product)}>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleAction("return-supplier", product)
+                            }
+                          >
                             <RotateCcw className="w-4 h-4 mr-2" />
                             Return to Supplier
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction('update-stock', product)}>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleAction("update-stock", product)
+                            }
+                          >
                             <BarChart3 className="w-4 h-4 mr-2" />
                             Update Stock
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction('add-product', product)}>
+                          <DropdownMenuItem
+                            onClick={() => handleAction("add-product", product)}
+                          >
                             <Edit className="w-4 h-4 mr-2" />
                             Edit Product
                           </DropdownMenuItem>

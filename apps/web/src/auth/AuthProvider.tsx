@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 
 const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { userState, validateSession } = useAuthStore();
+  const { userState, validateSession, getLocationId } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -11,18 +11,27 @@ const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
     const checkSession = async () => {
       try {
         await validateSession();
+        await getLocationId();
       } catch (error) {
         console.error("Session validation failed:", error);
         if (
           location.pathname !== "/login" &&
           location.pathname !== "/onboarding"
         ) {
-          navigate("/login", { replace: true });
+          navigate("/login");
         }
       }
     };
-    if (!userState?.token) checkSession();
-  }, [validateSession, navigate, location.pathname, userState]);
+    if (!userState?.token) {
+      checkSession(); 
+    }
+  }, [
+    validateSession,
+    getLocationId,
+    navigate,
+    location.pathname,
+    userState?.token,
+  ]);
 
   if (!userState?.token) return null;
   return children;

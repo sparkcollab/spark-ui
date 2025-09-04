@@ -20,6 +20,7 @@ export interface AuthState {
   ) => Promise<void>;
   logout: () => void;
   validateSession: () => Promise<void>;
+  getLocationId: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()((set) => ({
@@ -77,6 +78,23 @@ export const useAuthStore = create<AuthState>()((set) => ({
     try {
       const { data } = await axiosClient.get("/auth/session");
       set({ userState: { ...data.orgUser, token: data.token } });
+      return data;
+    } catch (error) {
+      console.error("Error requesting token:", error);
+      throw new Error(error.response?.data || "Failed to request token");
+    }
+  },
+  getLocationId: async () => {
+    try {
+      const { data } = await axiosClient.get(
+        `org/${useAuthStore.getState().userState.orgId}/location`
+      );
+      set({
+        userState: {
+          ...useAuthStore.getState().userState,
+          locationId: data.content?.[0].id,
+        },
+      });
       return data;
     } catch (error) {
       console.error("Error requesting token:", error);

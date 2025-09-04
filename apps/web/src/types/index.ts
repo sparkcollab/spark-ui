@@ -149,6 +149,7 @@ export interface User {
   id: string;
   name: string;
   orgId: string;
+  locationId: string;
   phone: string;
   role: string;
   updatedAt: string;
