@@ -1,0 +1,33 @@
+version: 2.1
+
+jobs:
+  docker-build:
+    docker:
+      - image: cimg/base:stable
+    working_directory: ~/repo
+    steps:
+      - checkout
+
+      # Enable Docker in CircleCI
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      # Build the Docker image
+      - run:
+          name: Build frontend Docker image
+          command: |
+            docker build -t my-frontend:latest .
+
+      # Login & Push to Docker Hub
+      - run:
+          name: Push frontend Docker image to Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+            docker tag my-frontend:latest $DOCKERHUB_USER/frontend:latest
+            docker push $DOCKERHUB_USER/frontend:latest
+
+workflows:
+  version: 2
+  build_and_push:
+    jobs:
+      - docker-build
