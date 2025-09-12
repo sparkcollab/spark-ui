@@ -34,7 +34,7 @@ jobs:
               --platform linux/amd64 \
               -t $IMAGE \
               --push \
-              frontend
+              .
 
 workflows:
   version: 2
