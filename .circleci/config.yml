@@ -1,33 +1,31 @@
 version: 2.1
 
 jobs:
-  docker-build:
+  frontend-build:
     docker:
       - image: cimg/base:stable
     working_directory: ~/repo
     steps:
       - checkout
 
-      # Enable Docker in CircleCI
+      # Enable Docker
       - setup_remote_docker:
           docker_layer_caching: true
 
-      # Build the Docker image
+      # Install buildx
       - run:
-          name: Build frontend Docker image
+          name: Setup Docker Buildx
           command: |
-            docker build -t my-frontend:latest .
+            docker buildx create --use || true
+            docker buildx inspect --bootstrap
 
-      # Login & Push to Docker Hub
+      # Build amd64 image and push
       - run:
-          name: Push frontend Docker image to Docker Hub
+          name: Build and Push Frontend
           command: |
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-            docker tag my-frontend:latest $DOCKERHUB_USER/frontend:latest
-            docker push $DOCKERHUB_USER/frontend:latest
-
-workflows:
-  version: 2
-  build_and_push:
-    jobs:
-      - docker-build
+            IMAGE=jappigill/frontend:latest
+            docker buildx build \
+              --platform linux/amd64 \
+              -t $IMAGE \
+              --push \
+              frontend
