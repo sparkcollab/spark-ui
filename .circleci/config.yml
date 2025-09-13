@@ -1,0 +1,43 @@
+version: 2.1
+
+jobs:
+  frontend-build:
+    docker:
+      - image: cimg/base:stable
+    working_directory: ~/repo
+    steps:
+      - checkout
+
+      # Enable Docker
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      # Login to Docker Hub
+      - run:
+          name: Docker Hub Login
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+
+      # Setup Docker Buildx
+      - run:
+          name: Setup Docker Buildx
+          command: |
+            docker buildx create --use || true
+            docker buildx inspect --bootstrap
+
+      # Build and push frontend image (amd64)
+      - run:
+          name: Build & Push Frontend
+          command: |
+            IMAGE=$DOCKERHUB_USER/frontend:latest
+            docker buildx build \
+              --platform linux/amd64 \
+              -t $IMAGE \
+              --push \
+              .
+
+workflows:
+  version: 2
+  build-and-push:
+    jobs:
+      - frontend-build

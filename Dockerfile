@@ -1,5 +1,5 @@
 # -------- Base image --------
-FROM node:18-alpine AS base
+FROM node:18-bullseye-slim AS base
 WORKDIR /app
 COPY package.json turbo.json ./
 COPY apps ./apps
@@ -14,7 +14,7 @@ RUN npm install
 RUN turbo run build --filter=vite_react_shadcn_ts
 
 # -------- Nginx Stage --------
-FROM nginx:alpine AS runner
+FROM nginx:stable AS runner
 WORKDIR /usr/share/nginx/html
 
 # Remove default nginx static assets
