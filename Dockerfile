@@ -9,6 +9,7 @@ COPY packages ./packages
 FROM base AS builder
 ENV VITE_API_URL=https://uniformly-selected-mollusk.ngrok-free.app/api/core
 
+RUN npm install -g turbo
 RUN npm install
 RUN turbo run build
 
