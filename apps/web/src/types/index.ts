@@ -188,3 +188,40 @@ export interface ValidateTokenPayload {
   phone?: string;
   token: string;
 }
+
+export interface LocationState {
+  content: Array<{
+    id: string;
+    orgId: string;
+    name: string;
+    address: string;
+    active: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+    sort: {
+      sorted: boolean;
+      unsorted: boolean;
+      empty: boolean;
+    };
+    offset: number;
+    paged: boolean;
+    unpaged: boolean;
+  };
+  totalPages: number;
+  totalElements: number;
+  last: boolean;
+  numberOfElements: number;
+  first: boolean;
+  size: number;
+  number: number;
+  sort: {
+    sorted: boolean;
+    unsorted: boolean;
+    empty: boolean;
+  };
+  empty: boolean;
+}

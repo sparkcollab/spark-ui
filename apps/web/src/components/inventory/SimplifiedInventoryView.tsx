@@ -33,6 +33,7 @@ import InventoryActionDrawer from "./InventoryActionDrawer";
 import { useInventory } from "@/store/useInventory";
 import { Item } from "@/types/inventory";
 import { useAuthStore } from "@/store/useAuthStore";
+import { Label } from "../ui/label";
 
 type DrawerAction =
   | "add-product"
@@ -44,10 +45,12 @@ type DrawerAction =
 const SimplifiedInventoryView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerAction, setDrawerAction] = useState<DrawerAction>(null);
   const [selectedProduct, setSelectedProduct] = useState<Item | null>(null);
   const { fetchItems, items } = useInventory();
+  const { locationState } = useAuthStore();
   const { userState } = useAuthStore();
   const [filteredProducts, setFilteredProducts] = useState<Item[]>([]);
   const [summary, setSummary] = useState({
@@ -58,10 +61,15 @@ const SimplifiedInventoryView = () => {
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
+    setLocationFilter(locationState?.content?.[0]?.id || "");
+  }, [locationState]);
+
+  useEffect(() => {
+
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    userState.locationId && fetchItems();
+    locationFilter && fetchItems(locationFilter);
     // Fetch products from API or state management store here
-  }, [userState?.locationId]);
+  }, [locationFilter]);
 
   useEffect(() => {
     const filteredProducts = items.filter((product) => {
@@ -145,6 +153,23 @@ const SimplifiedInventoryView = () => {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4 items-center">
+            <div>
+              <Select
+                value={locationState?.content?.[0]?.id}
+                onValueChange={(value) => setLocationFilter(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locationState?.content.map((location) => (
+                    <SelectItem value={location.id}>
+                      {location.name}, {location.address}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input

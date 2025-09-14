@@ -76,4 +76,18 @@ export interface Item {
   isActive: boolean;
   createdBy: string;
   updatedBy: string;
+  location: string;
+}
+
+export interface ItemBatch {
+  supplierId: string;
+  lotCode: string;
+  quantity: number;
+  costPrice: number;
+  receivedDate: string;
+  notes?: string; 
+  reason?: string;
+  type: "DELIVERY" | "RETURN";
+  createdBy: string;
+  updatedBy: string;
 }

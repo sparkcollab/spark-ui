@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   X,
   Package,
@@ -9,6 +9,7 @@ import {
   Hash,
   DollarSign,
   Scale,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useInventory } from "@/store/useInventory";
 import { Item } from "@/types/inventory";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useCounterPartyStore } from "@/store/useCounterParty";
 
 interface InventoryActionDrawerProps {
   isOpen: boolean;
@@ -51,13 +54,65 @@ const InventoryActionDrawer = ({
   product,
 }: InventoryActionDrawerProps) => {
   const [formData, setFormData] = useState<Item | null>(null);
-  const { postItem } = useInventory();
+  const { postItem, updateItem, postItemBatch } = useInventory();
+  const { locationState, userState } = useAuthStore();
+  const { counterParties, fetchCounterParties } = useCounterPartyStore();
   const handleInputChange = (field: string, value: any) => {
+    if (field === "quantityReceived") {
+      const regex = /[^0-9]/g;
+      if (regex.test(value)) {
+        return; // Invalid input, do not update state
+      }
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  useEffect(() => {
+    if (!counterParties?.length) {
+      fetchCounterParties();
+    }
+  }, [counterParties]);
+
+  useEffect(() => {
+    if (locationState && locationState.content.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        location:
+          prev?.location || product?.location || locationState.content[0].id,
+      }));
+    }
+  }, [locationState]);
+
   const handleSave = async () => {
-    await postItem(formData);
+    switch (action) {
+      case "add-product":
+        if (!product) {
+          await postItem(formData);
+          return;
+        }
+        await updateItem(product.id, formData);
+        break;
+      case "add-delivery":
+        await postItemBatch(product.id, {
+          type: "DELIVERY",
+          lotCode: formData.lotCode,
+          supplierId: formData.supplierName,
+          quantity: Number(formData.quantityReceived),
+          receivedDate: formData.deliveryDate,
+          costPrice: Number(formData.costPrice),
+          createdBy: userState.id, // Replace with actual user
+          updatedBy: userState.id, // Replace with actual user
+          notes: formData.returnNotes || "",
+        });
+        break;
+      case "return-supplier":
+        return "Return to Supplier";
+      case "update-stock":
+        return "Update Stock";
+      default:
+        return "Action";
+    }
+
     // Here you would handle the actual save logic
     onClose();
   };
@@ -111,6 +166,30 @@ const InventoryActionDrawer = ({
             )}
 
             <div className="space-y-4">
+              <div>
+                <Label htmlFor="location">Location</Label>
+                <Select
+                  value={
+                    formData?.location ||
+                    product?.location ||
+                    locationState.content?.[0]?.id
+                  }
+                  onValueChange={(value) =>
+                    handleInputChange("location", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locationState.content.map((location) => (
+                      <SelectItem value={location.id}>
+                        {location.name}, {location.address}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label htmlFor="productName">Product Name *</Label>
                 <Input
@@ -231,14 +310,29 @@ const InventoryActionDrawer = ({
             <div className="space-y-4">
               <div>
                 <Label htmlFor="supplierName">Supplier Name *</Label>
-                <Input
-                  id="supplierName"
-                  placeholder="Enter supplier name"
-                  value={formData?.supplierName || ""}
-                  onChange={(e) =>
-                    handleInputChange("supplierName", e.target.value)
-                  }
-                />
+                <div className="relative flex-1 max-w-md">
+                  <Select
+                    value={
+                      formData?.supplierName || product?.supplierName || ""
+                    }
+                    onValueChange={(value) =>
+                      handleInputChange("supplierName", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Supplier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {counterParties
+                        .filter((customer) => customer.kind === "SUPPLIER")
+                        .map((customer) => (
+                          <SelectItem value={customer.id} key={customer.id}>
+                            {customer.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div>
@@ -266,18 +360,6 @@ const InventoryActionDrawer = ({
                     }
                   />
                 </div>
-
-                <div>
-                  <Label htmlFor="expiryDate">Expiry Date</Label>
-                  <Input
-                    id="expiryDate"
-                    type="date"
-                    value={formData?.expiryDate || ""}
-                    onChange={(e) =>
-                      handleInputChange("expiryDate", e.target.value)
-                    }
-                  />
-                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -285,7 +367,6 @@ const InventoryActionDrawer = ({
                   <Label htmlFor="quantityReceived">Quantity Received *</Label>
                   <Input
                     id="quantityReceived"
-                    type="number"
                     placeholder="0"
                     value={formData?.quantityReceived || ""}
                     onChange={(e) =>
@@ -298,9 +379,7 @@ const InventoryActionDrawer = ({
                   <Label htmlFor="costPrice">Cost Price *</Label>
                   <Input
                     id="costPrice"
-                    type="number"
-                    placeholder="0.00"
-                    step="0.01"
+                    placeholder="0"
                     value={formData?.costPrice || ""}
                     onChange={(e) =>
                       handleInputChange("costPrice", e.target.value)

@@ -1,16 +1,17 @@
 import axiosClient from "@/api/axiosClient";
 import { create } from "zustand";
 import { useAuthStore } from "./useAuthStore";
-import { Item } from "@/types/inventory";
+import { Item, ItemBatch } from "@/types/inventory";
 
 export interface InventoryState {
   // Define your inventory state properties and actions here
   items: Item[];
   setItems: (items: Item[]) => void;
   postItem: (customerData: Item) => Promise<void>;
-  fetchItems: () => Promise<void>;
+  fetchItems: (locationId: string) => Promise<void>;
   updateItem: (id: string, customerData: Item) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
+  postItemBatch: (id: string, data: ItemBatch) => Promise<void>;
 }
 export const useInventory = create<InventoryState>()((set) => ({
   items: [],
@@ -19,7 +20,7 @@ export const useInventory = create<InventoryState>()((set) => ({
     try {
       const { data } = await axiosClient.post(
         `org/${useAuthStore.getState().userState.orgId}/location/${
-          useAuthStore.getState().userState.locationId
+          itemData.location
         }/item`,
         itemData
       );
@@ -30,13 +31,12 @@ export const useInventory = create<InventoryState>()((set) => ({
       throw new Error(error.response?.data || "Failed to add item");
     }
   },
-  fetchItems: async () => {
+  fetchItems: async (locationId) => {
     try {
-      console.log(useAuthStore.getState().userState);
       const { data } = await axiosClient.get(
-        `org/${useAuthStore.getState().userState.orgId}/location/${
-          useAuthStore.getState().userState.locationId
-        }/item`
+        `org/${
+          useAuthStore.getState().userState.orgId
+        }/location/${locationId}/item`
       );
       set({ items: data.content });
     } catch (error) {
@@ -46,7 +46,9 @@ export const useInventory = create<InventoryState>()((set) => ({
   updateItem: async (id, itemData) => {
     try {
       const { data } = await axiosClient.put(
-        `org/${useAuthStore.getState().userState.orgId}/item/${id}`,
+        `org/${useAuthStore.getState().userState.orgId}/location/${
+          itemData.location
+        }/item/${id}`,
         itemData
       );
       set((state) => ({
@@ -66,6 +68,14 @@ export const useInventory = create<InventoryState>()((set) => ({
       }));
     } catch (error) {
       throw new Error(error.response?.data || "Failed to delete item");
+    }
+  },
+  postItemBatch: async (id, data) => {
+    try {
+      const response = await axiosClient.post(`item/${id}/batch`, data);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data || `Failed to add ${data.type}`);
     }
   },
 }));

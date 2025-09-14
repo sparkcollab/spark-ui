@@ -16,6 +16,7 @@ import StaffInviteRegistration from "./pages/StaffInviteRegistration";
 import NotFound from "./pages/NotFound";
 import AuthProvider from "./auth/AuthProvider";
 import OnboardingComplete from "./components/onboarding/OnboardingComplete";
+import Supplier from "./pages/Supplier";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
                 <Route path="sales/invoices" element={<Sales />} />
                 <Route path="sales/returns" element={<Sales />} />
                 <Route path="customers" element={<Customers />} />
+                <Route path="supplier" element={<Supplier />} />
                 <Route path="staff" element={<Staff />} />
               </Route>
               <Route path="*" element={<NotFound />} />

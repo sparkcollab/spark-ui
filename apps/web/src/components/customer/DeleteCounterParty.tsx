@@ -9,21 +9,23 @@ import {
 } from "@/components/ui/dialog";
 import { UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { CustomerResponse } from "@/types/Customer";
+import { CounterPartyResponse } from "@/types/CounterParty";
 
-interface CustomerDeleteModalProps {
-  customerData: CustomerResponse;
+interface CounterPartyDeleteModalProps {
+  counterPartyData: CounterPartyResponse;
   isOpen: boolean;
   onClose: () => void;
   onDeleteSent: (id: string) => void;
+  type: "Customer" | "Supplier";
 }
 
-const CustomerDeleteModal = ({
-  customerData,
+const CounterPartyDeleteModal = ({
+  counterPartyData,
   isOpen,
   onClose,
   onDeleteSent,
-}: CustomerDeleteModalProps) => {
+  type,
+}: CounterPartyDeleteModalProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -32,13 +34,13 @@ const CustomerDeleteModal = ({
     setIsLoading(true);
 
     try {
-      // Here you would call your API to delete the customer
+      // Here you would call your API to delete the counterParty
       // Simulate API call
-      await onDeleteSent(customerData.id);
+      await onDeleteSent(counterPartyData.id);
 
       toast({
-        title: "Customer Delete!",
-        description: `Customer has been deleted`,
+        title: `${type} Delete!`,
+        description: `${type} has been deleted`,
       });
 
       onClose();
@@ -59,11 +61,12 @@ const CustomerDeleteModal = ({
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <UserPlus className="w-5 h-5 text-blue-600" />
-            <span>Delete Customer</span>
+            <span>Delete {type}</span>
           </DialogTitle>
           <DialogDescription>
-            Please confirm if you want to delete the customer{" "}
-            <strong>{customerData?.name}</strong>. This action cannot be undone.
+            Please confirm if you want to delete the {type}{" "}
+            <strong>{counterPartyData?.name}</strong>. This action cannot be
+            undone.
           </DialogDescription>
         </DialogHeader>
 
@@ -88,4 +91,4 @@ const CustomerDeleteModal = ({
   );
 };
 
-export default CustomerDeleteModal;
+export default CounterPartyDeleteModal;

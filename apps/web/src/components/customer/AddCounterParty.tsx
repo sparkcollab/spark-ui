@@ -18,24 +18,29 @@ import {
 } from "@/components/ui/dialog";
 import { UserPlus, Mail, Phone, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Customer } from "@/types/Customer";
 import { Textarea } from "../ui/textarea";
 import { useAuthStore } from "@/store/useAuthStore";
-import { add } from "date-fns";
+import { CounterParty } from "@/types/CounterParty";
 
-interface AddCustomerProps {
+interface AddCounterPartyProps {
   isOpen: boolean;
   onClose: () => void;
-  onCustomerAdd: (customerData: Customer) => void;
+  onCounterPartyAdd: (counterPartyData: CounterParty) => void;
+  type: "Customer" | "Supplier";
 }
 
-const AddCustomer = ({ isOpen, onClose, onCustomerAdd }: AddCustomerProps) => {
+const AddCounterParty = ({
+  isOpen,
+  onClose,
+  onCounterPartyAdd,
+  type,
+}: AddCounterPartyProps) => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState<Customer>({
+  const [formData, setFormData] = useState<CounterParty>({
     name: "",
     email: "",
     phone: "",
-    kind: "CUSTOMER",
+    kind: type.toUpperCase() as "CUSTOMER" | "SUPPLIER",
     createdBy: "",
     updatedBy: "",
     address: "",
@@ -50,19 +55,19 @@ const AddCustomer = ({ isOpen, onClose, onCustomerAdd }: AddCustomerProps) => {
     setIsLoading(true);
 
     try {
-      // Here you would call your API to send the customer invite
-      console.log("Sending customer invite:", formData);
+      // Here you would call your API to send the counterParty invite
+      console.log("Sending counterParty invite:", formData);
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       toast({
-        title: "Customer Added!",
-        description: `Customer ${formData.name} has been added successfully.`,
+        title: `${type} Added!`,
+        description: `${type} ${formData.name} has been added successfully.`,
       });
 
-      // Add the new customer member to the list with pending status
-      const newCustomerMember = {
+      // Add the new counterParty member to the list with pending status
+      const newCounterPartyMember = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -72,14 +77,14 @@ const AddCustomer = ({ isOpen, onClose, onCustomerAdd }: AddCustomerProps) => {
         updatedBy: id, // Replace with actual current user ID
       };
 
-      onCustomerAdd(newCustomerMember);
+      onCounterPartyAdd(newCounterPartyMember);
 
       // Reset form
       setFormData({
         name: "",
         email: "",
         phone: "",
-        kind: "CUSTOMER",
+        kind: type.toUpperCase() as "CUSTOMER" | "SUPPLIER",
         createdBy: "",
         updatedBy: "",
         address: "",
@@ -89,7 +94,7 @@ const AddCustomer = ({ isOpen, onClose, onCustomerAdd }: AddCustomerProps) => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add customer. Please try again.",
+        description: `Failed to add ${type}. Please try again.`,
         variant: "destructive",
       });
     } finally {
@@ -107,10 +112,10 @@ const AddCustomer = ({ isOpen, onClose, onCustomerAdd }: AddCustomerProps) => {
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <UserPlus className="w-5 h-5 text-blue-600" />
-            <span>Add Customer</span>
+            <span>Add {type}</span>
           </DialogTitle>
           <DialogDescription>
-            Fill in the details below to add a new customer to your account.
+            Fill in the details below to add a new {type} to your account.
           </DialogDescription>
         </DialogHeader>
 
@@ -162,22 +167,6 @@ const AddCustomer = ({ isOpen, onClose, onCustomerAdd }: AddCustomerProps) => {
           </div>
 
           <div>
-            <Label htmlFor="kind">Kind</Label>
-            <Select
-              value={formData.kind}
-              onValueChange={(value) => handleInputChange("kind", value)}
-            >
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="SUPPLIER">Supplier</SelectItem>
-                <SelectItem value="CUSTOMER">Customer</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
             <Label htmlFor="address">Address</Label>
             <Textarea
               id="address"
@@ -208,4 +197,4 @@ const AddCustomer = ({ isOpen, onClose, onCustomerAdd }: AddCustomerProps) => {
   );
 };
 
-export default AddCustomer;
+export default AddCounterParty;

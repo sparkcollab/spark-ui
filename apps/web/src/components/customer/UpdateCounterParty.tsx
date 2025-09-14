@@ -18,46 +18,48 @@ import {
 } from "@/components/ui/dialog";
 import { UserPlus, Mail, Phone, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Customer, CustomerResponse } from "@/types/Customer";
+import { CounterParty, CounterPartyResponse } from "@/types/CounterParty";
 import { Textarea } from "../ui/textarea";
 import { useAuthStore } from "@/store/useAuthStore";
 
-interface UpdateCustomerProps {
+interface UpdateCounterPartyProps {
   isOpen: boolean;
   onClose: () => void;
-  onCustomerUpdate: (customerData: Customer) => void;
-  customerData: CustomerResponse | null;
+  onCounterPartyUpdate: (counterPartyData: CounterParty) => void;
+  counterPartyData: CounterPartyResponse | null;
+  type: "Customer" | "Supplier";
 }
 
-const UpdateCustomer = ({
+const UpdateCounterParty = ({
   isOpen,
   onClose,
-  onCustomerUpdate,
-  customerData,
-}: UpdateCustomerProps) => {
+  onCounterPartyUpdate,
+  counterPartyData,
+  type
+}: UpdateCounterPartyProps) => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState<Customer>({
+  const [formData, setFormData] = useState<CounterParty>({
     name: "",
     email: "",
     phone: "",
-    kind: "CUSTOMER",
+    kind: type.toUpperCase() as "CUSTOMER" | "SUPPLIER",
     createdBy: "",
     updatedBy: "",
     address: "",
   });
   useEffect(() => {
-    if (customerData) {
+    if (counterPartyData) {
       setFormData({
-        name: customerData.name,
-        email: customerData.email,
-        phone: customerData.phone || "",
-        kind: customerData.kind,
-        createdBy: customerData.createdBy,
-        updatedBy: customerData.updatedBy,
-        address: customerData.address || "",
+        name: counterPartyData.name,
+        email: counterPartyData.email,
+        phone: counterPartyData.phone || "",
+        kind: counterPartyData.kind,
+        createdBy: counterPartyData.createdBy,
+        updatedBy: counterPartyData.updatedBy,
+        address: counterPartyData.address || "",
       });
     }
-  }, [customerData]);
+  }, [counterPartyData]);
   const [isLoading, setIsLoading] = useState(false);
   const {
     userState: { id },
@@ -72,12 +74,12 @@ const UpdateCustomer = ({
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       toast({
-        title: "Customer Updateed!",
-        description: `Customer ${formData.name} has been updated successfully.`,
+        title: "CounterParty Updateed!",
+        description: `CounterParty ${formData.name} has been updated successfully.`,
       });
 
-      // Update the new customer member to the list with pending status
-      const newCustomerMember = {
+      // Update the new counterParty member to the list with pending status
+      const newCounterPartyMember = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -87,7 +89,7 @@ const UpdateCustomer = ({
         updatedBy: id, // Replace with actual current user ID
       };
 
-      onCustomerUpdate(newCustomerMember);
+      onCounterPartyUpdate(newCounterPartyMember);
 
       // Reset form
       setFormData({
@@ -104,7 +106,7 @@ const UpdateCustomer = ({
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update customer. Please try again.",
+        description: "Failed to update counterParty. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -122,10 +124,11 @@ const UpdateCustomer = ({
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <UserPlus className="w-5 h-5 text-blue-600" />
-            <span>Update Customer</span>
+            <span>Update CounterParty</span>
           </DialogTitle>
           <DialogDescription>
-            Update customer details below and click "Update" to save changes.
+            Update counterParty details below and click "Update" to save
+            changes.
           </DialogDescription>
         </DialogHeader>
 
@@ -187,7 +190,7 @@ const UpdateCustomer = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="SUPPLIER">Supplier</SelectItem>
-                <SelectItem value="CUSTOMER">Customer</SelectItem>
+                <SelectItem value="CUSTOMER">CounterParty</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -223,4 +226,4 @@ const UpdateCustomer = ({
   );
 };
 
-export default UpdateCustomer;
+export default UpdateCounterParty;

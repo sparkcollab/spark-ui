@@ -1,4 +1,4 @@
-export interface Customer {
+export interface CounterParty {
   name: string;
   email: string;
   phone: string;
@@ -8,7 +8,7 @@ export interface Customer {
   updatedBy: string;
 }
 
-export interface CustomerResponse {
+export interface CounterPartyResponse {
   id: string;
   orgId: string;
   name: string;
@@ -22,8 +22,8 @@ export interface CustomerResponse {
   updatedBy: string;
   updatedAt: string;
 }
-export interface CustomerListResponse {
-  content: CustomerResponse[];
+export interface CounterPartyListResponse {
+  content: CounterPartyResponse[];
   totalElements: number;
   totalPages: number;
   pageNumber: number;

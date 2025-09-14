@@ -1,5 +1,6 @@
 import axiosClient from "@/api/axiosClient";
 import {
+  LocationState,
   RegistrationState,
   RequestTokenPayload,
   User,
@@ -11,6 +12,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   userState: null | User;
   registrationState: null | RegistrationState;
+  locationState: LocationState | null;
   setUserState: (userState: User | null, successAction?: () => void) => void;
   requestToken: (payload: RequestTokenPayload) => Promise<void>;
   registerUser: (userState: RegistrationState) => void;
@@ -27,6 +29,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
   isAuthenticated: false,
   userState: null,
   registrationState: null,
+  locationState: null,
   setUserState: (userState, successAction) => {
     set({ userState });
     successAction?.();
@@ -94,6 +97,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
           ...useAuthStore.getState().userState,
           locationId: data.content?.[0].id,
         },
+        locationState: data,
       });
       return data;
     } catch (error) {

@@ -30,6 +30,7 @@ const Sidebar = ({ collapsed }: SidebarProps) => {
     { name: 'Inventory', icon: Package, path: '/inventory', enabled: true },
     { name: 'Sales', icon: ShoppingCart, path: '/sales', enabled: true },
     { name: 'Customers', icon: Users, path: '/customers', enabled: true },
+    { name: 'Supplier', icon: Users, path: '/supplier', enabled: true },
     { name: 'Staff', icon: UserCheck, path: '/staff', enabled: true },
     { name: 'Settings', icon: Settings, path: '/settings', enabled: false },
   ];
