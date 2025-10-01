@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   UserCheck,
   Plus,
@@ -16,8 +16,13 @@ import { InviteStaffMember } from "@/types/Staff";
 import { useStaffStore } from "@/store/useStaffStore";
 import StaffUpdateModal from "@/components/StaffUpdateModal";
 import StaffDeleteModal from "@/components/StaffDeleteModal";
+import TableComponent from "@/components/Table";
+import { StaffColumns } from "@/table/staff";
+import { TableCell } from "@/components/ui/table";
 
+const pageSize = 5;
 const Staff = () => {
+  const [currentPage, setCurrentpage] = useState(0);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState({
     open: false,
@@ -37,7 +42,7 @@ const Staff = () => {
   } = useStaffStore();
 
   useEffect(() => {
-    fetchStaffList();
+    fetchStaffList(currentPage, pageSize);
   }, [fetchStaffList]);
 
   useEffect(() => {
@@ -89,6 +94,62 @@ const Staff = () => {
   const activeStaff = staffMembers.filter((member) => member.active).length;
   const inActive = staffMembers.filter((member) => !member.active).length;
 
+  const formattedStaffMemberRows = useMemo(
+    () =>
+      staffMembers.map((member) => {
+        const status = member.active ? "Active" : "Inactive";
+        return {
+          ...member,
+          formattedDate: {
+            cell: (
+              <TableCell>
+                {" "}
+                {new Date(member.createdAt).toDateString()}
+                <br />
+                {new Date(member.createdAt).toTimeString()}
+              </TableCell>
+            ),
+          },
+          formattedStatus: {
+            cell: (
+              <TableCell>
+                <span
+                  className={`inline-flex items-center space-x-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                    status
+                  )}`}
+                >
+                  {getStatusIcon(status)}
+                </span>
+              </TableCell>
+            ),
+          },
+          actions: {
+            cell: (
+              <TableCell>
+                <span
+                  className={`inline-flex items-center space-x-1 px-2 py-1 text-xs font-semibold rounded-full`}
+                >
+                  <EditIcon
+                    className="w-4 h-4 text-gray-500 dark:text-gray-300 cursor-pointer"
+                    onClick={() =>
+                      setIsUpdateModalOpen({ open: true, data: member })
+                    }
+                  />
+                  <Trash2
+                    className="w-4 h-4 text-red-500 dark:text-red-400 cursor-pointer"
+                    onClick={() =>
+                      setIsDeleteModalOpen({ open: true, data: member })
+                    }
+                  />
+                </span>
+              </TableCell>
+            ),
+          },
+        };
+      }),
+    [staffMembers]
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -137,97 +198,12 @@ const Staff = () => {
       </div>
 
       {/* Staff Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {staffMembers.map((staff) => (
-                <tr
-                  key={staff.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {staff.name}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-500 dark:text-gray-300">
-                      <div>{staff.email}</div>
-                      {staff.phone && (
-                        <div className="text-xs">{staff.phone}</div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
-                    <div>{staff.role}</div>
-                    {staff.department && (
-                      <div className="text-xs">{staff.department}</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
-                    {new Date(staff.createdAt).toDateString()}
-                    <br />
-                    {new Date(staff.createdAt).toTimeString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center space-x-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                        staff.status
-                      )}`}
-                    >
-                      {getStatusIcon(staff.active ? "Active" : "Inactive")}
-                      <span>{staff.active ? "Active" : "Inactive"}</span>
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center space-x-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                        staff.status
-                      )}`}
-                    >
-                      <EditIcon
-                        className="w-4 h-4 text-gray-500 dark:text-gray-300 cursor-pointer"
-                        onClick={() =>
-                          setIsUpdateModalOpen({ open: true, data: staff })
-                        }
-                      />
-                      <Trash2
-                        className="w-4 h-4 text-red-500 dark:text-red-400 cursor-pointer"
-                        onClick={() =>
-                          setIsDeleteModalOpen({ open: true, data: staff })
-                        }
-                      />
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <TableComponent
+        columns={StaffColumns}
+        rows={formattedStaffMemberRows}
+        pageSize={5}
+        currentPage={currentPage}
+      />
 
       <StaffInviteModal
         isOpen={isInviteModalOpen}

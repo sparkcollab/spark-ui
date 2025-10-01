@@ -9,7 +9,7 @@ interface StaffState {
   staffDetails: StaffMember | null;
   setStaffList: (staffList: StaffMember[]) => void;
   setStaffDetails: (staffDetails: StaffMember | null) => void;
-  fetchStaffList: () => Promise<void>;
+  fetchStaffList: (page: number, size: number) => Promise<void>;
   fetchStaffDetails: (userId: string) => Promise<void>;
   inviteStaffMember: (staffData: InviteStaffMember) => Promise<void>;
   updateStaffMember: (userId: string, staffData: StaffMember) => Promise<void>;
@@ -22,11 +22,13 @@ export const useStaffStore = create<StaffState>()(
     staffDetails: null,
     setStaffList: (staffList) => set({ staffList }),
     setStaffDetails: (staffDetails) => set({ staffDetails }),
-    fetchStaffList: async () => {
+    fetchStaffList: async (page, size) => {
       try {
         console.log(useAuthStore.getState().userState);
         const { data } = await axiosClient.get(
-          `org/${useAuthStore.getState().userState.orgId}/user`
+          `org/${
+            useAuthStore.getState().userState.orgId
+          }/user?page=${page}&size=${size}`
         );
         set({ staffList: data.content });
       } catch (error) {

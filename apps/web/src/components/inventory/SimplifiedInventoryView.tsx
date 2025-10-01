@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Search,
   Plus,
@@ -65,7 +65,6 @@ const SimplifiedInventoryView = () => {
   }, [locationState]);
 
   useEffect(() => {
-
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     locationFilter && fetchItems(locationFilter);
     // Fetch products from API or state management store here
@@ -107,6 +106,16 @@ const SimplifiedInventoryView = () => {
     setSelectedProduct(null);
   };
 
+  const stockValue = useMemo(
+    () => filteredProducts.reduce((acc, product) => product.costPrice + acc, 0),
+    [filteredProducts]
+  );
+
+  const lowStockItems = useMemo(
+    () => filteredProducts.filter((product) => product.stock < 5),
+    [filteredProducts]
+  );
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -125,29 +134,29 @@ const SimplifiedInventoryView = () => {
       </div>
 
       {/* Summary Cards */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <SummaryCard
           title="Total Products"
-          value={totalProducts}
+          value={filteredProducts.length}
           icon={Package}
           description="Active products in inventory"
           color="blue"
         />
         <SummaryCard
           title="Stock Value"
-          value={`$${stockValue.toLocaleString()}`}
+          value={stockValue}
           icon={DollarSign}
           description="Total inventory value"
           color="green"
         />
         <SummaryCard
           title="Low Stock Items"
-          value={lowStockItems}
+          value={lowStockItems.length}
           icon={AlertTriangle}
           description="Products below threshold"
           color="orange"
         />
-      </div> */}
+      </div>
 
       {/* Filters */}
       <Card>

@@ -1,32 +1,87 @@
-import React from "react";
+import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
-const Table = ({ columns, rows }) => {
+const TableComponent = ({ columns, rows, pageSize = 10, currentPage }) => {
   return (
-    <table className="w-full">
-      <thead className="bg-gray-50 dark:bg-gray-700">
-        {columns.map((column) => (
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              {column.header}
-            </th>{" "}
-          </tr>
-        ))}
-      </thead>
-      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-        {rows.map((row) => (
-          <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <Table>
+        <TableHeader className="bg-gray-50 dark:bg-gray-700">
+          <TableRow>
             {columns.map((column) => (
-              <td className="px-6 py-4">
-                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                  {row[column.accessor]}
-                </div>
-              </td>
+              <TableHead>{column.header}</TableHead>
             ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => (
+            <>
+              <TableRow>
+                {columns.map((column) => (
+                  <>
+                    {row[column.accessor].cell ? (
+                      row[column.accessor].cell
+                    ) : (
+                      <TableCell>{row[column.accessor]}</TableCell>
+                    )}
+                  </>
+                ))}
+              </TableRow>
+            </>
+          ))}
+        </TableBody>
+      </Table>
+      <Pagination>
+        <PaginationContent>
+          {/* {
+            rows.map(())
+          } */}
+          <PaginationItem>
+            <PaginationPrevious href="#" />
+          </PaginationItem>
+
+          <PaginationItem>
+            <PaginationLink href="#">1</PaginationLink>
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#" isActive>
+              2
+            </PaginationLink>
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#">3</PaginationLink>
+          </PaginationItem>
+
+          <PaginationItem>
+            <PaginationEllipsis />
+          </PaginationItem>
+
+          <PaginationItem>
+            <PaginationLink href="#">10</PaginationLink>
+          </PaginationItem>
+
+          <PaginationItem>
+            <PaginationNext href="#" />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    </div>
   );
 };
 
-export default Table;
+export default TableComponent;

@@ -1,16 +1,5 @@
-import React, { useEffect, useState } from "react";
-import {
-  X,
-  Package,
-  Truck,
-  RotateCcw,
-  BarChart3,
-  Calendar,
-  Hash,
-  DollarSign,
-  Scale,
-  Search,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Package, Truck, RotateCcw, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,13 +16,14 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetClose,
 } from "@/components/ui/sheet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useInventory } from "@/store/useInventory";
 import { Item } from "@/types/inventory";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCounterPartyStore } from "@/store/useCounterParty";
+import { SearchableDropdown } from "../ui/searchable-select";
+import { getOptions } from "@/lib/helper-utils";
 
 interface InventoryActionDrawerProps {
   isOpen: boolean;
@@ -310,7 +300,14 @@ const InventoryActionDrawer = ({
             <div className="space-y-4">
               <div>
                 <Label htmlFor="supplierName">Supplier Name *</Label>
-                <div className="relative flex-1 max-w-md">
+                <div className="relative flex-1">
+                  {/* <SearchableDropdown
+                    options={getOptions(counterParties, "id", "name")}
+                    placeholder={"Select Supplier"}
+                    onValueSelect={(value) =>
+                      handleInputChange("supplierName", value)
+                    }
+                  /> */}
                   <Select
                     value={
                       formData?.supplierName || product?.supplierName || ""

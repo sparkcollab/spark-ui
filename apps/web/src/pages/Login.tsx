@@ -41,7 +41,7 @@ const Login = () => {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [step]);
+  }, [step]);   
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();

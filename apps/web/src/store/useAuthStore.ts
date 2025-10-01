@@ -57,10 +57,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
   validateToken: async (payload: ValidateTokenPayload) => {
     try {
       const { data } = await axiosClient.post("/auth/validate-token", payload);
-      set({
+      await set({
         userState: { ...data.orgUser, token: data.token },
         isAuthenticated: true,
       });
+      await useAuthStore.getState().getLocationId();
     } catch (error) {
       console.error("Error validating token:", error);
       throw new Error(error.response?.data || "Failed to request token");
@@ -80,7 +81,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
   validateSession: async () => {
     try {
       const { data } = await axiosClient.get("/auth/session");
-      set({ userState: { ...data.orgUser, token: data.token } });
+      await set({ userState: { ...data.orgUser, token: data.token } });
+      await useAuthStore.getState().getLocationId();
       return data;
     } catch (error) {
       console.error("Error requesting token:", error);
